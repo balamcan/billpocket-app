@@ -1,0 +1,17 @@
+body{
+    background: #ccc;
+}
+.form-signin{
+    max-width: 330px;
+    padding: 15px;
+    margin: 0 auto;
+}
+#signin-form .alert{
+    margin-top: 10px;
+}
+#img-loader{
+    margin: 10px auto;
+}
+#clear-search,#btn-venta,#btn-devolucion{
+    cursor: pointer;
+}
