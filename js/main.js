@@ -163,9 +163,10 @@ $('#btn-search').click(function() {
             var arreglo = objeto.json[objeto.tipo_activo.toString()];
             var encontrados = [];
             encontrados = filterValuePart(arreglo, valor);
-            if (encontrados !== []) {
+            if (encontrados.length !== 0) {
                 objeto.mostrarEncontrados(encontrados);
             } else {
+                console.log('No encontrado');
                 $('#no-results').removeClass('hidden');
             }
         } else {
