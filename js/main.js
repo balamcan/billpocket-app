@@ -1,8 +1,14 @@
 jQuery.support.cors = true;
+var meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+var dias = ['Domingo', 'Lunes', 'Martes', 'Miercoles', 'Jueves', 'Viernes', 'Sabado'];
 var objeto = {
     compactado: false,
     tipo_activo: '',
     json: {
+        venta: {},
+        devolucion: {}
+    },
+    mes_total: {
         venta: {},
         devolucion: {}
     },
@@ -49,26 +55,29 @@ var objeto = {
         for (var i in arreglo) {
             var icono_dispersion = '';
             var tarjeta = arreglo[i].t2m;
+            var fechahora = arreglo[i].fechahora;
             tarjeta = tarjeta.split("=");
-
+            fechahora = fechahora.replace(' ', 'T');
+            ;
+            fechahora = new Date(fechahora);
             if (arreglo[i].dispersion === "0") {
-                icono_dispersion = '<span class="glyphicon glyphicon-time"></span>';
+                icono_dispersion = '<span class="glyphicon glyphicon-time yellowText"></span>';
             } else if (arreglo[i].dispersion === "1") {
-                icono_dispersion = '<span class="glyphicon glyphicon-ok"></span>';
+                icono_dispersion = '<span class="glyphicon glyphicon-ok greenText"></span>';
             }
             html += '<tr>';
             html += '<td>' + arreglo[i].idtransaccion + '</td>';
-            html += '<td>' + arreglo[i].fechahora + '</td>';
-            html += '<td>' + arreglo[i].tipotarjeta + ' ' + tarjeta[0] + '</td>'; //arreglo[i].t2m  //+arreglo[i].tipotarjeta 
+            html += '<td>' + dias[fechahora.getDay()].substr(0, 3) + '&nbsp;' + fechahora.getDate() + '-' + meses[fechahora.getMonth()].substr(0, 3) + '-' + fechahora.getFullYear() + '&nbsp;' + fechahora.toLocaleTimeString() + '</td>';
+            html += '<td><img src="img/' + arreglo[i].tipotarjeta.toLowerCase() + '.jpg"> ' + tarjeta[0] + '</td>'; //arreglo[i].t2m  //+arreglo[i].tipotarjeta 
             html += '<td>$' + arreglo[i].monto + '</td>';
             html += '<td>' + icono_dispersion + '</td>';//arreglo[i].dispersion
             html += '<td>' + arreglo[i].etiqueta + '</td>';
             html += '</tr>';
         }
         $('#resultado>tbody').html(html);
-        if (this.compactado) {
-            compactar(this.compactado);
-        }
+//        if (this.compactado) {
+//            compactar(this.compactado);
+//        }
         return this;
     },
     mostrarEncontrados: function(encontrados) {
@@ -78,39 +87,71 @@ var objeto = {
             var resultado = encontrados[i].toString();
             var icono_dispersion = '';
             var tarjeta = arreglo[resultado].t2m;
+            var fechahora = arreglo[resultado].fechahora;
             tarjeta = tarjeta.split("=");
-
-            if (arreglo[resultado].dispersion === "0") {
-                icono_dispersion = '<span class="glyphicon glyphicon-time"></span>';
-            } else if (arreglo[resultado].dispersion === "1") {
-                icono_dispersion = '<span class="glyphicon glyphicon-ok"></span>';
+            fechahora = fechahora.replace(' ', 'T');
+            fechahora = new Date(fechahora);
+            if (arreglo[i].dispersion === "0") {
+                icono_dispersion = '<span class="glyphicon glyphicon-time yellowText"></span>';
+            } else if (arreglo[i].dispersion === "1") {
+                icono_dispersion = '<span class="glyphicon glyphicon-ok greenText"></span>';
             }
             html += '<tr>';
             html += '<td>' + arreglo[resultado].idtransaccion + '</td>';
-            html += '<td>' + arreglo[resultado].fechahora + '</td>';
-            html += '<td>' + arreglo[resultado].tipotarjeta + ' ' + tarjeta[0] + '</td>'; //arreglo[resultado].t2m  //+arreglo[resultado].tipotarjeta 
+            html += '<td>' + dias[fechahora.getDay()].substr(0, 3) + '&nbsp;' + fechahora.getDate() + '-' + meses[fechahora.getMonth()].substr(0, 3) + '-' + fechahora.getFullYear() + '&nbsp;' + fechahora.toLocaleTimeString() + '</td>';
+            html += '<td><img src="img/' + arreglo[resultado].tipotarjeta.toLowerCase() + '.jpg"> ' + tarjeta[0] + '</td>'; //arreglo[i].t2m  //+arreglo[i].tipotarjeta 
             html += '<td>$' + arreglo[resultado].monto + '</td>';
             html += '<td>' + icono_dispersion + '</td>';//arreglo[resultado].dispersion
             html += '<td>' + arreglo[resultado].etiqueta + '</td>';
             html += '</tr>';
         }
         $('#resultado>tbody').html(html);
-        if (this.compactado) {
-            compactar(this.compactado);
+//        if (this.compactado) {
+//            compactar(this.compactado);
+//        }
+        return this;
+    },
+    resumenMensual: function() {
+        var datos = this.json[this.tipo_activo];
+        var tabla = {};
+        for (i in datos) {
+            var fecha = datos[i].fechahora;
+            var total = 0;
+            fecha = fecha.replace(' ', 'T');
+            fecha = new Date(fecha);
+            if (tabla[fecha.getMonth().toString()] !== undefined) {
+                tabla[fecha.getMonth().toString()] = parseFloat(datos[i].monto) + parseFloat(tabla[fecha.getMonth().toString()]);
+            } else {
+                tabla[fecha.getMonth().toString()] = parseFloat(datos[i].monto);
+            }
         }
+
+        this.mes_total[this.tipo_activo] = tabla;
+        return this;
+    },
+    mostrarResumen: function() {
+        var html = '';
+        var tabla = this.mes_total[this.tipo_activo];
+        for (i in tabla) {
+            html += '<tr><td>' + meses[i] + '</td><td>$' + tabla[i] + '</td></tr>';
+        }
+        $('#resumen-mensual>tbody').html(html);
         return this;
     }
 };
+
 $(document).ready(function() {
     objeto.obtenerVenta(function() {
         $('#img-loader').fadeOut();
         $('#resultado').removeClass('hidden');
         $('#btn-venta')[0].click();
+        $('#mostar-resumen').removeClass('hidden');
     }).mostrarJson('venta');
     objeto.obtenerDevolucion().mostrarJson('devolucion');
     $('#form-search').submit(function(event) {
         event.preventDefault();
     });
+    
 });
 $('#user,#password').keyup(function() {
     enabling();
@@ -131,12 +172,15 @@ $('#btn-venta').click(function() {
     $(this).parent().addClass('active');
     objeto.mostrarPeticion('venta').activarTipo('venta');
     ocultarMensaje();
+    ocultarResumen();
+
 });
 $('#btn-devolucion').click(function() {
     $('#nav-activities li').removeClass('active');
     $(this).parent().addClass('active');
     objeto.mostrarPeticion('devolucion').activarTipo('devolucion');
     ocultarMensaje();
+    ocultarResumen();
 });
 /*
  *object.keys regresa un arreglo de las claves del objeto mencionado en el parametro
@@ -174,25 +218,25 @@ $('#btn-search').click(function() {
         }
     }
 });
-$('#btn-compact').on('click', function() {
-    if ($(this).hasClass('active')) {
-        compactar(objeto.cambiarCompactado(false).compactado);
-        $(this).find('span').addClass('glyphicon-unchecked').removeClass('glyphicon-check');
-    } else {
-        compactar(objeto.cambiarCompactado(true).compactado);
-        $(this).find('span').addClass('glyphicon-check').removeClass('glyphicon-unchecked');
-    }
-    ocultarMensaje();
-});
-function compactar(bool) {
-    if (!bool) {
-        var table = $('#resultado tr>th, #resultado tr>td');
-        table.removeClass('hidden');
-    } else {
-        var table = $('#resultado tr>th:not(:nth-child(2),:nth-child(3),:nth-child(4)), #resultado tr>td:not(:nth-child(2),:nth-child(3),:nth-child(4))');
-        table.addClass('hidden');
-    }
-}
+//$('#btn-compact').on('click', function() {
+//    if ($(this).hasClass('active')) {
+//        compactar(objeto.cambiarCompactado(false).compactado);
+//        $(this).find('span').addClass('glyphicon-unchecked').removeClass('glyphicon-check');
+//    } else {
+//        compactar(objeto.cambiarCompactado(true).compactado);
+//        $(this).find('span').addClass('glyphicon-check').removeClass('glyphicon-unchecked');
+//    }
+//    ocultarMensaje();
+//});
+//function compactar(bool) {
+//    if (!bool) {
+//        var table = $('#resultado tr>th, #resultado tr>td');
+//        table.removeClass('hidden');
+//    } else {
+//        var table = $('#resultado tr>th:not(:nth-child(2),:nth-child(3),:nth-child(4)), #resultado tr>td:not(:nth-child(2),:nth-child(3),:nth-child(4))');
+//        table.addClass('hidden');
+//    }
+//}
 function filterValuePart(arr, val) {
     var list = [];
     var re = new RegExp(val.toString());
@@ -213,6 +257,15 @@ function ocultarMensaje() {
         obj.addClass('hidden');
     }
 }
+function ocultarResumen() {
+    if ($('#mostar-resumen').find('i').hasClass('glyphicon-chevron-right')) {
+        $('#mostar-resumen').find('i').addClass('glyphicon-chevron-down').removeClass('glyphicon-chevron-right');
+        $('#resumen').addClass('hidden');
+    }
+    if (!$('#resumen').hasClass('hidden')) {
+        $('#resumen').addClass('hidden');
+    }
+}
 function enabling() {
     if ($('#user').val() !== "" && $('#password').val() !== "") {
         $('#enviar').removeClass('disabled');
@@ -220,3 +273,31 @@ function enabling() {
         $('#enviar').addClass('disabled');
     }
 }
+function grafica(resumen) {
+    var data = [];
+    for (i in resumen) {
+        var obj = {
+            label: meses[i].toString(),
+            data: resumen[i]
+        };
+        data.push(obj);
+    }
+    $.plot('#grafica', data, {
+        series: {
+            pie: {
+                show: true
+            }
+        }
+    });
+}
+$('#mostar-resumen').click(function() {
+    if ($(this).find('i').hasClass('glyphicon-chevron-down')) {
+        $(this).find('i').removeClass('glyphicon-chevron-down').addClass('glyphicon-chevron-right');
+        $('#resumen').removeClass('hidden');
+        objeto.resumenMensual().mostrarResumen();
+        grafica(objeto.mes_total[objeto.tipo_activo]);
+    } else {
+        $(this).find('i').addClass('glyphicon-chevron-down').removeClass('glyphicon-chevron-right');
+        $('#resumen').addClass('hidden');
+    }
+});
